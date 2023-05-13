@@ -1,0 +1,17 @@
+name: Mirror to AWS CodeCommit
+on: [push]
+
+jobs:
+  to_codecommit:
+    runs-on: ubuntu-latest
+    steps:
+      - run : mkdir ~/.ssh
+      - run : echo "$GIT_HUB_ACTION_SSH_KEY" > ~/.ssh/id_rsa;
+        env:
+          GIT_HUB_ACTION_SSH_KEY: ${{ secrets.CODE_COMMIT_USER_SSH_KEY }}
+      - run : chmod 600 ~/.ssh/id_rsa;
+      # - run : printf "Host staging\nHostName git-codecommit.*.amazonaws.com\n User APKAZ4K3W7QKA77LV7ED\n IdentityFile ~/.ssh/id_rsa\n StrictHostKeyChecking no" >> ~/.ssh/config
+      # - run : cat ~/.ssh/config
+      - run : git clone --mirror git@github.com:${{ github.repository }}
+      - run : ls -la
+      - run : export GIT_SSH_COMMAND="ssh -v -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -l ${{ secrets.CODE_COMMIT_USER_KEY_ID }}" && cd ${{ github.event.repository.name }}.git && git remote rm origin && git remote add origin ssh://git-codecommit.eu-central-1.amazonaws.com/v1/repos/${{ github.event.repository.name }} && git push origin --mirror
